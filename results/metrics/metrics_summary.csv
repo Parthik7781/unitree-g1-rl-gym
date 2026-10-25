@@ -1,0 +1,8 @@
+Group,Condition,Walking_Speed_ms,Step_Length_m,Cadence_spm,Stride_Period_s,Torso_Pitch_RMS_deg,Notes
+Speed Variation,Slow,0.2447,0.0979,150.0,0.8,,"speed:OK, step_metrics:OK"
+Speed Variation,Medium,0.4728,0.1891,150.0,0.8,,"speed:OK, step_metrics:OK"
+Speed Variation,Fast,0.9047,0.3619,150.0,0.8,,"speed:OK, step_metrics:OK"
+Gait Restriction,Normal,,,,,0.3913,OK
+Gait Restriction,Left Restricted,,,,,1.4207,OK
+Gait Restriction,Right Restricted,,,,,2.6915,OK
+Gait Restriction,Both Restricted,,,,,0.3705,OK

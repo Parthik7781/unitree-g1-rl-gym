@@ -1,0 +1,316 @@
+================================================================================
+UNITREE G1 GAIT VALIDATION - QUICK START GUIDE
+================================================================================
+
+## Quick Reference
+
+### Run Gait Analysis (3 seconds, 3 cycles):
+```bash
+python validate_gait.py
+```
+
+### Output Location:
+```
+validation_gait_data/
+├── data/
+│   ├── left_ankle.csv    ← Raw IMU data (left)
+│   └── right_ankle.csv   ← Raw IMU data (right)
+├── plots/
+│   ├── tear_drop_left_trajectory.png
+│   ├── tear_drop_right_trajectory.png
+│   ├── bilateral_gait_comparison.png
+│   ├── gyroscope_phase_signals.png
+│   └── [more plots...]
+└── results.txt          ← MAIN REPORT (read this!)
+```
+
+---
+
+## Key Metrics Explained
+
+| Metric | Good Range | What It Means |
+|--------|-----------|---------------|
+| **Phase Shift** | 180° ± 30° | Left and right legs alternate correctly |
+| **Overall Symmetry** | >85% | Both legs move similarly |
+| **Phase Status** | PASS | Proper bipedal coordination |
+| **Symmetry Status** | PASS | Balanced weight distribution |
+
+---
+
+## Results Status Guide
+
+### ✓ PASS - Gait is Correct
+- Phase shift: ~180° (legs alternate perfectly)
+- Symmetry: >85% (balanced walking)
+- **Action**: No adjustments needed
+
+### ⚠ PARTIAL - Phase Issue
+- Phase shift: >30° error
+- Symmetry: Good
+- **Cause**: Leg coordination problem
+- **Fix**: Check motor synchronization, sensor phase offsets
+
+### ⚠ PARTIAL - Symmetry Issue
+- Phase shift: Correct
+- Symmetry: <85% (unbalanced)
+- **Cause**: One leg weaker or longer
+- **Fix**: Check leg length, motor strength, weight distribution
+
+### ✗ FAIL - Multiple Issues
+- Both phase and symmetry problems
+- **Action**: Perform hardware diagnostics
+
+---
+
+## Key Plots
+
+### 1. **Tear-Drop Patterns** (bilateral_gait_comparison.png)
+- Shows foot path during walking
+- Overlaid left (blue) and right (orange)
+- Well-formed tear-drops → Good gait
+- Distorted → Coordination issues
+
+### 2. **Gyroscope Phase Signals** (gyroscope_phase_signals.png)
+- Shows 180° phase relationship clearly
+- Left ankle (blue) opposite of right (orange)
+- Perfect alternation → Correct bipedal gait
+- Peaks should be offset by ~0.5 seconds
+
+### 3. **Acceleration Signals** (acceleration_signals.png)
+- Three components: Ax (forward), Ay (side), Az (vertical)
+- Shows impact forces and propulsion
+- Smooth oscillation → Normal walking
+- Jerky patterns → Balance/coordination issues
+
+---
+
+## Phase Shift Calculation (Technical)
+
+**What is it?**
+The time delay between when left leg reaches peak and right leg reaches peak.
+
+**Expected for Normal Walking:**
+- 180° (half gait cycle)
+- For 1-second cycle: 0.5 seconds delay
+
+**How it's calculated:**
+1. Use Hilbert transform on gyroscope data
+2. Extract instantaneous phase
+3. Calculate mean phase difference
+4. Convert to degrees: (phase_rad / 2π) × 360°
+
+**Formula:**
+```
+phase_shift_deg = mean(φ_right - φ_left) × 180/π
+
+For correct gait:
+  180° ± 30° acceptable
+```
+
+**Why Hilbert Transform?**
+- Better than cross-correlation for periodic signals
+- Directly measures phase, not just similarity
+- Robust to noise and amplitude changes
+- Works with complex motion patterns
+
+---
+
+## Data Format (CSV Files)
+
+Each CSV contains:
+```
+timestamp,sample_num,ax,ay,az,gx,gy,gz,roll,pitch,yaw
+
+Example:
+0.0,      0,  0.078,-0.084, 5.31, -0.047, -0.098, 0.011, 0.1, 0.0, 0.0
+0.01,     1,  0.311, 0.058, 5.26,  0.074,  0.088, 0.040, 0.12, 0.006, 0.001
+...
+```
+
+**Columns:**
+- `timestamp`: Time in seconds (0.0, 0.01, 0.02, ...)
+- `sample_num`: Sequential number (0, 1, 2, ...)
+- `ax, ay, az`: Acceleration (m/s²) in 3 axes
+- `gx, gy, gz`: Angular velocity (rad/s) in 3 axes
+- `roll, pitch, yaw`: Orientation (radians) in 3 axes
+
+**Axes Convention:**
+- `ax`: Forward/backward (anterior-posterior)
+- `ay`: Left/right (medial-lateral)
+- `az`: Up/down (vertical)
+
+---
+
+## Preprocessing Applied
+
+Data processing pipeline:
+
+```
+Raw IMU Data
+    ↓
+Low-pass Filter (Gaussian, σ=2)
+    ↓
+Integration: a → v
+    ↓
+High-pass Filter (0.5 Hz cutoff)
+    ↓
+Integration: v → x
+    ↓
+Linear Detrending
+    ↓
+Foot Trajectory (clean)
+```
+
+**Why this process?**
+- Reduces noise from sensors
+- Removes gravity drift during integration
+- Preserves motion information
+- Results in smooth, clean trajectories
+
+---
+
+## Troubleshooting
+
+### Issue: "Phase shift shows 0°"
+- Sensors may be out of sync
+- Check hardware connection
+- Verify sensor orientation
+
+### Issue: "Plots look wrong"
+- Check sensor calibration
+- Verify data range (no clipping)
+- Check for sensor failures
+
+### Issue: "Symmetry very low"
+- One leg may be weaker
+- Check alignment and calibration
+- Verify motor strength matching
+
+### Issue: "All values are NaN"
+- Sensor communication failure
+- Check USB/network connection
+- Restart system
+
+---
+
+## File Locations
+
+**Code Files:**
+- `ankle_imu_collection.py` - Data collection module
+- `gait_analysis.py` - Analysis engine
+- `validate_gait.py` - Main script (run this!)
+
+**Output Directory:**
+- `validation_gait_data/` - All results saved here
+
+**Documentation:**
+- `GAIT_ANALYSIS_DOCUMENTATION.txt` - Full technical docs
+- `GAIT_ANALYSIS_QUICKSTART.txt` - This file
+
+---
+
+## Python Dependencies
+
+```bash
+pip install numpy pandas matplotlib scipy
+```
+
+These should already be installed if you have the project setup.
+
+---
+
+## Customization
+
+### Change gait cycle duration:
+Edit `validate_gait.py`:
+```python
+success = system.run(
+    duration_per_cycle=1.0,    # seconds (default)
+    num_gait_cycles=3          # cycles (default)
+)
+```
+
+### Change phase tolerance:
+Edit `gait_analysis.py`, line ~320:
+```python
+is_correct_phase = bool(phase_error < 30.0)  # degrees
+```
+
+### Change symmetry threshold:
+Edit `gait_analysis.py`, line ~310:
+```python
+is_symmetric = bool(overall_symmetry > 0.85)  # >85%
+```
+
+---
+
+## Example Session
+
+```bash
+$ python validate_gait.py
+
+================================================================================
+UNITREE G1 - ANKLE GAIT VALIDATION SYSTEM
+================================================================================
+[2024-01-15 10:30:45] [INFO] STEP 1: Collecting ankle IMU data...
+[2024-01-15 10:30:45] [INFO]   - Collecting 3 gait cycles
+[2024-01-15 10:30:45] [INFO]   - Total duration: 3.0s
+[2024-01-15 10:30:45] [INFO]   ✓ Left ankle: 300 samples
+[2024-01-15 10:30:45] [INFO]   ✓ Right ankle: 300 samples
+
+[2024-01-15 10:30:46] [INFO] STEP 2: Saving sensor data...
+[DATA] Saved left_ankle.csv
+[DATA] Saved right_ankle.csv
+
+[2024-01-15 10:30:47] [INFO] STEP 3: Analyzing gait patterns...
+[1/6] Calculating trajectories...
+[2/6] Calculating phase shift...
+[3/6] Generating plots...
+[4/6] Generating signals...
+[5/6] Generating sensors...
+[6/6] Validating gait...
+
+[2024-01-15 10:30:50] [INFO] STEP 4: Generating report...
+
+================================================================================
+GAIT VALIDATION RESULTS SUMMARY
+================================================================================
+
+Phase Shift: 180.03° (expected: 180°)
+Symmetry:   95.72% (target: >85%)
+
+STATUS: ✓ PASS - GAIT IS CORRECT
+
+For complete details, see: validation_gait_data/results.txt
+For plots, see: validation_gait_data/plots
+```
+
+---
+
+## For Research/Publication
+
+Use these plots in reports:
+1. `bilateral_gait_comparison.png` - Main gait pattern
+2. `gyroscope_phase_signals.png` - Phase relationship proof
+3. `acceleration_signals.png` - Force analysis
+
+Include this in methods:
+- IMU: Dual ankle sensors, 100 Hz sampling
+- Data: 3 gait cycles (3 seconds)
+- Analysis: Hilbert transform for phase, symmetry metrics
+- Preprocessing: Low-pass filter → integration → high-pass filter
+
+---
+
+## Need Help?
+
+1. **First Check**: Look at `validation_gait_data/results.txt`
+2. **Read Details**: See `GAIT_ANALYSIS_DOCUMENTATION.txt`
+3. **Review Plots**: Check images in `validation_gait_data/plots/`
+4. **Check Data**: Open CSV files in spreadsheet app
+
+---
+
+Last Updated: 2024
+Version: 1.0
+Status: Ready for Production

@@ -1,0 +1,78 @@
+================================================================================
+UNITREE G1 ROBOT - SENSOR ANALYSIS REPORT
+================================================================================
+
+Generated: 2026-04-09 16:45:31
+Samples: 130
+Duration: 13.00 seconds
+Sampling Rate: 10.00 Hz
+
+================================================================================
+CHEST ANALYSIS
+================================================================================
+
+Position:
+  Mean:    -0.053197 rad
+  Std Dev: 0.025490 rad
+  RMSE:    0.025490 rad (mean-centered)
+  Min:     -0.099567 rad
+  Max:     -0.001600 rad
+
+Velocity:
+  Mean:    -0.009034 rad/s
+  Std Dev: 0.066396 rad/s
+  RMSE:    0.066396 rad/s (mean-centered)
+  Min:     -0.152159 rad/s
+  Max:     0.144651 rad/s
+
+Observation: Chest motion is STABLE
+
+================================================================================
+SHOULDER ANALYSIS
+================================================================================
+
+X-axis Angular Velocity:
+  Mean: 0.019026 rad/s
+  Std:  0.372584 rad/s
+  RMSE: 0.372584 rad/s
+
+Y-axis Angular Velocity:
+  Mean: -0.009681 rad/s
+  Std:  0.079176 rad/s
+  RMSE: 0.079176 rad/s
+
+Z-axis Angular Velocity:
+  Mean: -0.009034 rad/s
+  Std:  0.066396 rad/s
+  RMSE: 0.066396 rad/s
+
+Total Magnitude:
+  Mean: 0.319531 rad/s
+  RMSE: 0.218937 rad/s
+
+Observation: Dominant rotation axis is X
+
+================================================================================
+BACK ANALYSIS
+================================================================================
+
+X-axis Gravity:
+  Mean: -0.002022
+  Std:  0.006955
+  RMSE: 0.006955
+
+Y-axis Gravity:
+  Mean: -0.008811
+  Std:  0.043086
+  RMSE: 0.043086
+
+Z-axis Gravity:
+  Mean: -0.999006
+  Std:  0.000661
+  RMSE: 0.000661
+
+Observation: UPRIGHT - gravity correctly oriented on Z-axis
+
+================================================================================
+END OF REPORT
+================================================================================

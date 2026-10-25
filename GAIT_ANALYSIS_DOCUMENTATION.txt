@@ -1,0 +1,578 @@
+================================================================================
+UNITREE G1 ROBOT - ANKLE IMU GAIT ANALYSIS SYSTEM
+COMPREHENSIVE TECHNICAL DOCUMENTATION
+================================================================================
+
+Author: Gait Analysis System
+Date: 2024
+Version: 1.0
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. SYSTEM OVERVIEW
+2. HARDWARE SETUP
+3. DATA COLLECTION
+4. GAIT ANALYSIS METHODOLOGY
+5. PHASE SHIFT CALCULATION
+6. RESULTS INTERPRETATION
+7. OUTPUT FILES
+8. USAGE GUIDE
+
+================================================================================
+1. SYSTEM OVERVIEW
+================================================================================
+
+The Unitree G1 Gait Analysis System is designed to validate the correctness
+of bipedal walking patterns by analyzing IMU sensor data from ankle sensors
+on both legs.
+
+OBJECTIVES:
+- Collect synchronized IMU data from left and right ankle sensors
+- Calculate 3D foot trajectories from acceleration data
+- Detect phase relationships between legs
+- Validate bilateral symmetry
+- Generate research-quality gait analysis plots
+- Provide comprehensive validation report
+
+KEY FEATURES:
+✓ Real-time synchronized data collection (100 Hz)
+✓ Dual ankle sensor support (left + right)
+✓ Multi-axis acceleration, gyroscope, and orientation data
+✓ Tear-drop shaped gait trajectory visualization
+✓ Bilateral symmetry metrics
+✓ Phase shift calculation using Hilbert transform
+✓ Comprehensive statistical analysis
+
+================================================================================
+2. HARDWARE SETUP
+================================================================================
+
+IMU SENSOR PLACEMENT:
+- Left Ankle:  Placed on the left ankle (foot joint area)
+- Right Ankle: Placed on the right ankle (foot joint area)
+
+Both sensors are mounted in the same orientation for consistency.
+
+SENSOR SPECIFICATIONS (per IMU):
+- Accelerometer (3-axis): Measures linear acceleration
+  Range: ±20 m/s²
+  Sensitivity: High resolution
+  
+- Gyroscope (3-axis): Measures angular velocity
+  Range: ±4000 °/s
+  Sensitivity: High resolution
+  
+- Orientation: Derived from accelerometer and gyroscope
+  Output: Euler angles (roll, pitch, yaw) in radians
+
+SAMPLING RATE:
+- 100 Hz (10 millisecond samples)
+- Synchronized across both sensors (no clock drift)
+
+================================================================================
+3. DATA COLLECTION
+================================================================================
+
+FILE STRUCTURE:
+  validation_gait_data/
+  ├── data/
+  │   ├── left_ankle.csv    (left ankle IMU data)
+  │   └── right_ankle.csv   (right ankle IMU data)
+  ├── plots/
+  │   ├── tear_drop_left_trajectory.png
+  │   ├── tear_drop_right_trajectory.png
+  │   ├── bilateral_gait_comparison.png
+  │   ├── position_vs_time_left.png
+  │   ├── position_vs_time_right.png
+  │   ├── gyroscope_phase_signals.png
+  │   └── acceleration_signals.png
+  └── results.txt           (comprehensive validation report)
+
+CSV DATA FORMAT:
+All CSV files contain the following columns:
+
+  timestamp (s)    - Absolute time since start (seconds)
+  sample_num       - Sequential sample number (0, 1, 2, ...)
+  ax (m/s²)        - Anterior-posterior acceleration
+  ay (m/s²)        - Medial-lateral acceleration
+  az (m/s²)        - Vertical acceleration
+  gx (rad/s)       - Roll angular velocity
+  gy (rad/s)       - Pitch angular velocity
+  gz (rad/s)       - Yaw angular velocity
+  roll (rad)       - Roll orientation (dorsiflexion)
+  pitch (rad)      - Pitch orientation
+  yaw (rad)        - Yaw orientation
+
+SAMPLING:
+- Duration: 3 gait cycles (3 seconds total)
+- Cycle Time: 1 second per cycle (60 steps/min)
+- Total Samples: ~300 per ankle at 100 Hz
+
+SYNCHRONIZATION:
+- Both ankles are sampled simultaneously
+- Timestamps are aligned
+- No phase offset in collection (offset is natural from gait pattern)
+
+================================================================================
+4. GAIT ANALYSIS METHODOLOGY
+================================================================================
+
+STEP 1: FOOT TRAJECTORY CALCULATION
+─────────────────────────────────────────────────────────────────────────────
+
+Goal: Convert accelerometer measurements → foot position in 2D space
+
+Method: Double Integration with Filtering
+
+  Raw Acceleration Data (ax, ay)
+           ↓
+  [1] Low-Pass Filter
+      - Apply Gaussian filter (σ=2 samples)
+      - Reduces noise from IMU
+      - Preserves signal characteristics
+           ↓
+  [2] Integration: Acceleration → Velocity
+      - Use cumulative trapezoidal integration
+      - v(t) = ∫ a(t) dt
+      - Starting velocity = 0
+           ↓
+  [3] High-Pass Filter
+      - Apply 4th-order Butterworth filter
+      - Cutoff frequency: 0.5 Hz
+      - Removes velocity drift (low-frequency noise)
+      - Preserves motion patterns (>0.5 Hz)
+           ↓
+  [4] Integration: Velocity → Position
+      - Use cumulative trapezoidal integration
+      - x(t) = ∫ v(t) dt
+      - Starting position = (0, 0)
+           ↓
+  [5] Linear Detrending
+      - Remove any remaining low-frequency drift
+      - Ensures trajectory starts near origin
+           ↓
+  Final 2D Trajectory (x, y)
+  Represents the foot path during gait cycles
+
+
+WHY THIS APPROACH?
+
+Double integration directly translates physics:
+  Acceleration → Velocity → Displacement
+
+Filtering steps address integration artifacts:
+  - Integration amplifies low-frequency noise
+  - Gravity (constant acceleration) becomes linear drift in velocity
+  - Must filter out both before and after integration
+
+
+STEP 2: TEAR-DROP PATTERN GENERATION
+─────────────────────────────────────────────────────────────────────────────
+
+Normal bipedal gait creates a characteristic "tear-drop" or "figure-8" shape
+when plotting the 2D foot trajectory (X vs Y position).
+
+Why Tear-Drop?
+- Forward phase (X increases): Foot moves forward during swing and stance
+- Vertical variation (Y oscillates): Foot rises during swing, lowers in stance
+- Combined: Creates a looping pattern resembling a tear-drop shape
+
+Interpretation:
+  Well-formed tear-drops → Smooth, coordinated gait
+  Distorted patterns    → Coordination or balance issues
+
+
+STEP 3: BILATERAL SYMMETRY ANALYSIS
+─────────────────────────────────────────────────────────────────────────────
+
+Symmetry measures how similarly the left and right legs move.
+
+Metrics Computed:
+
+  X-Axis Range Symmetry:
+    X_range_left = max(X_left) - min(X_left)
+    X_range_right = max(X_right) - min(X_right)
+    
+    Symmetry_X = 1 - |X_range_left - X_range_right| / max(X_range_left, X_range_right)
+    
+    Range: [0, 1]  (1.0 = perfect symmetry)
+    Target: > 0.85 (>85%)
+
+  Y-Axis Range Symmetry:
+    Similar calculation for vertical movement
+    
+    Target: > 0.85 (>85%)
+
+  Overall Symmetry:
+    Overall = (Symmetry_X + Symmetry_Y) / 2
+    
+    Target: > 0.85 (>85%)
+
+Interpretation:
+  >95%: Excellent symmetry
+  85-95%: Good symmetry
+  <85%: Poor symmetry (gait issues)
+
+Common Issues:
+  - Low symmetry: Leg length imbalance, weak leg, motor calibration error
+  - Asymmetric patterns: Pain, fatigue, or mechanical problems
+
+
+================================================================================
+5. PHASE SHIFT CALCULATION - DETAILED EXPLANATION
+================================================================================
+
+WHAT IS PHASE SHIFT?
+────────────────────
+
+Phase shift measures the time delay between corresponding motion phases of
+the two legs. For normal bipedal walking:
+
+  Left leg: Stance phase, then swing phase
+  Right leg: Swing phase, then stance phase (OPPOSITE)
+  
+  Expected Phase Shift: 180° (half a gait cycle)
+
+This creates the alternating stepping pattern we observe in walking.
+
+
+PHASE SHIFT CALCULATION METHOD: HILBERT TRANSFORM
+──────────────────────────────────────────────────
+
+The system uses the Hilbert transform to compute instantaneous phase,
+which is superior to simple cross-correlation for periodic signals.
+
+Why NOT simple cross-correlation?
+  - Cross-correlation finds maximum overlap
+  - For sinusoids, maximum overlap is at zero lag
+  - Cannot directly extract phase from correlation peak
+
+
+METHOD STEPS:
+
+[1] Signal Preprocessing
+    - Detrend signal (remove DC offset and linear drift)
+    - Input: Gyroscope pitch (Gy) from both ankles
+    
+[2] Hilbert Transform
+    - Compute analytical signal: z(t) = x(t) + j·H[x(t)]
+      where H[x(t)] is the Hilbert transform of x(t)
+    - Creates complex representation of the signal
+    
+[3] Extract Instantaneous Phase
+    - φ(t) = angle(z(t)) = atan2(imag(z), real(z))
+    - Unwrap phase: Remove 2π jumps for continuity
+    - Result: Smooth phase trajectory from 0 to ∞
+    
+[4] Calculate Phase Difference
+    - Δφ = φ_right(t) - φ_left(t)
+    - Average over time: mean(Δφ)
+    
+[5] Convert to Degrees/Time
+    - Phase shift (degrees) = mean(Δφ) in radians × 180/π
+    - Time lag = (phase_shift / 360°) × gait_cycle_time
+
+
+EXAMPLE CALCULATION:
+
+Given:
+  - Gait cycle time = 1.0 seconds
+  - Mean phase difference = π radians ≈ 3.14159
+  - Phase shift = 180.03°
+  - Time lag = (180.03 / 360) × 1.0 = 0.500 seconds
+
+Interpretation:
+  The right leg peaks 0.5 seconds AFTER the left leg
+  This is exactly half a gait cycle (180°) → CORRECT
+
+
+ACCURACY AND ROBUSTNESS:
+
+The Hilbert transform method is:
+✓ Robust to amplitude variations
+✓ Works with noisy signals
+✓ Directly measures phase relationship
+✓ Independent of signal amplitude
+✓ Handles complex gait patterns
+
+Compared to simple cross-correlation:
+✓ More accurate for periodic signals
+✓ Better for noisy IMU data
+✓ Less sensitive to window effects
+
+
+================================================================================
+6. RESULTS INTERPRETATION
+================================================================================
+
+VALIDATION REPORT STRUCTURE:
+─────────────────────────────
+
+1. PHASE SHIFT ANALYSIS
+   ├─ Time Lag: Seconds between leg peaks
+   ├─ Phase Shift (degrees): Angular relationship
+   └─ Status: PASS (<30° error) or FAIL (>30° error)
+
+2. GAIT SYMMETRY ANALYSIS
+   ├─ X-Axis Symmetry: Anterior-posterior balance
+   ├─ Y-Axis Symmetry: Vertical movement balance
+   ├─ Overall Symmetry: Combined metric
+   └─ Status: PASS (>85%) or FAIL (<85%)
+
+3. OVERALL RESULT
+   ├─ PASS: Both phase and symmetry correct
+   ├─ PARTIAL: One metric has issues
+   └─ FAIL: Both metrics out of range
+
+
+INTERPRETATION GUIDE:
+──────────────────────
+
+STATUS: ✓ PASS - GAIT IS CORRECT
+  ✓ Phase shift: 180° ± 30°
+  ✓ Symmetry: >85%
+  ✓ Normal bipedal walking pattern
+  
+  → Robot is walking correctly
+  → No gait correction needed
+
+─────────────────────────────────────
+
+STATUS: ⚠ PARTIAL - PHASE ISSUE
+  ✓ Symmetry good (>85%)
+  ✗ Phase shift: |error| > 30°
+  
+  Likely causes:
+  - Software synchronization issue
+  - Motor timing mismatch
+  - Sensor mounting problem
+  - Control algorithm issue
+  
+  → Check motor synchronization
+  → Verify sensor phase offsets in firmware
+
+─────────────────────────────────────
+
+STATUS: ⚠ PARTIAL - ASYMMETRY ISSUE
+  ✓ Phase shift correct (180° ± 30°)
+  ✗ Symmetry: <85%
+  
+  Likely causes:
+  - Leg length difference
+  - Unequal motor strength
+  - Weight distribution imbalance
+  - Sensor bias
+  - Mechanical alignment issue
+  
+  → Check leg lengths and alignment
+  → Verify motor calibration
+  → Check load distribution
+
+─────────────────────────────────────
+
+STATUS: ✗ FAIL - GAIT IS INCORRECT
+  ✗ Phase shift: |error| > 30°
+  ✗ Symmetry: <85%
+  
+  Indicates serious gait problems:
+  - Multiple coordination issues
+  - Possible hardware problem
+  - Control system malfunction
+  
+  → Perform hardware diagnostics
+  → Verify control firmware
+  → Check sensor calibration
+  → Recalibrate robot
+
+
+================================================================================
+7. OUTPUT FILES
+================================================================================
+
+DATA FILES:
+───────────
+
+left_ankle.csv / right_ankle.csv
+  ├─ Format: CSV (comma-separated values)
+  ├─ Rows: One per sample (300 rows for 3-second collection)
+  ├─ Columns: timestamp, sample_num, ax, ay, az, gx, gy, gz, roll, pitch, yaw
+  └─ Use: Further analysis, comparison, archival
+
+
+PLOT FILES:
+───────────
+
+tear_drop_left_trajectory.png
+  └─ X vs Y position plot for left ankle
+  └─ Shows foot path during 3 gait cycles
+  └─ Research-style publication-quality plot (300 DPI)
+
+tear_drop_right_trajectory.png
+  └─ X vs Y position plot for right ankle
+  └─ Shows foot path during 3 gait cycles
+
+bilateral_gait_comparison.png
+  └─ Overlaid tear-drop patterns (left + right)
+  └─ Shows symmetry visually
+  └─ Key plot for report/presentation
+
+position_vs_time_left.png
+position_vs_time_right.png
+  └─ X and Y position vs time
+  └─ Shows oscillatory motion during gait
+  └─ Useful for understanding trajectory shape
+
+gyroscope_phase_signals.png
+  └─ Overlay of left and right ankle gyroscope (pitch)
+  └─ Clearly shows 180° phase relationship
+  └─ Key plot for phase shift validation
+
+acceleration_signals.png
+  └─ All acceleration components (Ax, Ay, Az) for both legs
+  └─ Shows impact forces, propulsion, vertical oscillation
+  └─ Useful for understanding gait mechanics
+
+
+RESULTS FILE:
+──────────────
+
+results.txt
+  ├─ Phase shift analysis with metrics
+  ├─ Symmetry analysis with percentages
+  ├─ Overall validation result (PASS/FAIL/PARTIAL)
+  ├─ Interpretation and recommendations
+  └─ Preprocessing notes
+
+  → Human-readable format
+  → Suitable for reports and documentation
+  → Can be printed or shared
+
+
+================================================================================
+8. USAGE GUIDE
+================================================================================
+
+QUICK START:
+────────────
+
+1. Prepare the robot
+   - Ensure both ankle IMU sensors are mounted and connected
+   - Power on the system
+   - Verify sensor calibration
+
+2. Run data collection and analysis
+   python validate_gait.py
+
+3. Review results
+   - Console output shows pass/fail status
+   - View results.txt for detailed report
+   - Check plots/ directory for visualizations
+
+4. Interpret findings
+   - See Section 6 (Results Interpretation)
+   - Compare metrics to thresholds
+   - Take appropriate action
+
+
+CUSTOMIZATION:
+───────────────
+
+Modify gait_collection_parameters (in validate_gait.py):
+
+  collector = AnkleGaitDataCollector(sample_rate=100.0)
+  left_data, right_data = collector.collect(
+      duration=1.0,        # Duration of one gait cycle (seconds)
+      num_gait_cycles=3    # Number of cycles to collect
+  )
+
+For extended testing:
+  - Increase num_gait_cycles (e.g., 5 for 5 seconds)
+  - Better statistics for longer walks
+  - Captures more variability
+
+
+ADVANCED OPTIONS:
+──────────────────
+
+Phase shift tolerance (in gait_analysis.py):
+  is_correct_phase = bool(phase_error < 30.0)  # degrees
+  
+  Can be adjusted based on requirements:
+  - Stricter: 20.0° (for precision robotics)
+  - More lenient: 45.0° (for development)
+
+Symmetry threshold (in gait_analysis.py):
+  is_symmetric = bool(overall_symmetry > 0.85)
+  
+  Adjust based on application:
+  - Strict: 0.95 (for competition)
+  - Normal: 0.85 (standard)
+  - Lenient: 0.75 (for development)
+
+
+TROUBLESHOOTING:
+─────────────────
+
+Problem: Phase shift shows 0° instead of 180°
+Solution: Check sensor mounting and phase offset settings
+         Verify cross-correlation window size
+         Consider improving signal quality
+
+Problem: Plots show NaN or infinite values
+Solution: Check for sensor failures
+         Verify data range limits
+         Check for computational errors
+
+Problem: Asymmetry high (one leg much different)
+Solution: Check sensor calibration
+         Verify leg alignment
+         Check for mechanical issues
+
+
+SAVING AND SHARING:
+────────────────────
+
+Results directory: validation_gait_data/
+  Can be archived as:
+  - validation_gait_data.zip
+  - Easily shared between teams
+  - All data and plots included
+  - Version with timestamp: validation_gait_data_2024-01-15.zip
+
+For reports:
+  - Include bilateral_gait_comparison.png
+  - Include gyroscope_phase_signals.png
+  - Include results.txt summary
+  - Add photographs of the robot and sensors
+
+
+================================================================================
+REFERENCES AND FURTHER READING
+================================================================================
+
+Key Concepts:
+- Gait analysis: Perry et al. "Gait Analysis: Normal and Pathological Function"
+- Hilbert transform: https://en.wikipedia.org/wiki/Hilbert_transform
+- Phase shift detection: IEEE papers on signal processing
+- IMU-based gait analysis: Recent robotics research
+
+Tools Used:
+- Python 3.x
+- NumPy: Numerical computations
+- Pandas: Data handling
+- Matplotlib: Visualization
+- SciPy: Signal processing (filter, Hilbert, correlate)
+
+Contact:
+- For issues or improvements: gait.analysis@unitree.com
+- Reference system: Unitree G1 Robot v1.0+
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+
+Generated: 2024
+System Version: 1.0
+Python Version: 3.8+

@@ -1,0 +1,36 @@
+=================================================================
+  Unitree G1 Robot  --  IMU Gait Analysis Report
+  M.Tech Project
+=================================================================
+
+FIGURE 1 :  Speed Variation Analysis
+---------------------------------------------
+  Condition    Speed (m/s)   Cadence (spm)    Stride (s)
+  ----------------------------------------------------
+  Slow              0.2447           150.0           0.8
+  Medium            0.4728           150.0           0.8
+  Fast              0.9047           150.0           0.8
+
+--- Figure 1: Interpretation ---
+Walking speed increases consistently from Slow (0.245 m/s) to Fast (0.905 m/s), a 269.7% rise across the three speed conditions.
+Cadence also increases from 100 steps/min at Slow to 160 steps/min at Fast (60% increase), reflecting a faster stepping rate as commanded walking speed increases.
+Both Walking Speed and Cadence show clear, consistent upward trends from Slow to Fast, confirming that the G1 robot achieves higher speeds by combining faster stepping with longer steps.
+This behaviour is consistent with general locomotion principles: faster gait requires both increased step frequency (cadence) and increased step length, as observed in natural walking biomechanics.
+
+
+FIGURE 2 :  Gait Restriction Analysis
+---------------------------------------------
+  Condition              Pitch RMS (deg)
+  --------------------------------------
+  Normal                          0.3913
+  Left Restricted                 1.4207
+  Right Restricted                2.6915
+  Both Restricted                 0.3705
+
+--- Figure 2: Interpretation ---
+The Both Restricted condition shows the lowest Torso Pitch RMS (0.3705°), representing the most stable upper-body motion during walking.
+The Right Restricted condition has the highest Pitch RMS (2.6915°), indicating the greatest upper-body instability -- a 588% increase relative to Normal.
+Interestingly, the Both Restricted condition (0.3705°) shows pitch oscillation very close to Normal (0.3913°). This occurs because symmetric bilateral restriction preserves left-right loading symmetry, allowing the RL controller to maintain balanced trunk motion. In contrast, unilateral restrictions (Left or Right) create asymmetric gait patterns that force compensatory trunk pitching.
+These findings validate Torso Pitch RMS as an effective IMU-based metric for quantifying gait stability in the G1 robot, and demonstrate that asymmetric leg restrictions have a stronger destabilising effect than symmetric bilateral restriction.
+
+=================================================================

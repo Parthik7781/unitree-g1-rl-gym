@@ -1,0 +1,37 @@
+============================================================
+UPPER BODY SENSOR ANALYSIS REPORT
+============================================================
+
+CHEST (Torso) ANALYSIS
+------------------------------------------------------------
+Position - Mean: -0.041510 rad, Std: 0.018976 rad
+Position - Min: -0.078100 rad, Max: -0.001600 rad
+Velocity - Mean: -0.008038 rad/s, Std: 0.067341 rad/s
+Velocity - Min: -0.152159 rad/s, Max: 0.144651 rad/s
+
+SHOULDER (IMU Angular Velocity) ANALYSIS
+------------------------------------------------------------
+X-Axis - Mean: 0.026423 rad/s, Std: 0.372401 rad/s
+Y-Axis - Mean: -0.010095 rad/s, Std: 0.079736 rad/s
+Z-Axis - Mean: -0.008038 rad/s, Std: 0.067341 rad/s
+Total Angular Velocity - Mean: 0.319275 rad/s
+
+BACK (Gravity Orientation) ANALYSIS
+------------------------------------------------------------
+Gravity X - Mean: -0.001902, Std: 0.007151
+Gravity Y - Mean: -0.009703, Std: 0.043067
+Gravity Z - Mean: -0.998997, Std: 0.000670
+Gravity Z - Expected: -1.0 (pointing down)
+
+BASE LINEAR VELOCITY ANALYSIS
+------------------------------------------------------------
+X-Axis - Mean: 0.463918 m/s, Std: 0.053182 m/s
+Y-Axis - Mean: -0.037076 m/s, Std: 0.072126 m/s
+Z-Axis - Mean: -0.004863 m/s, Std: 0.064233 m/s
+Total Linear Velocity - Mean: 0.475008 m/s
+
+OVERALL STATISTICS
+------------------------------------------------------------
+Total Samples: 95
+Time Duration: 9.50 seconds
+Sampling Rate: 10.00 Hz
